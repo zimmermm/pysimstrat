@@ -58,3 +58,10 @@ The complete configuration can be written to files by:
 .. code-block:: python
 
     simstrat_configuration.writeConfiguration()
+
+
+To read and adapt an existing simstrat configuration:
+
+.. code-block:: python
+
+    simstrat_configuration = simconfig.SimstratConfiguration(parfilename)
