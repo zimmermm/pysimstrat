@@ -42,6 +42,7 @@ The initial conditions, the morphology as well as the meteorological forcing hav
 In the same way, the in- and outflow inputfiles can be adapted by providing the concent as a pandas DataFrame (e.g. salinity):
 
 .. code-block:: python
+
     import pysimstrat.date as simdate
     s_depths = [-8, 0]
     s_source = [0.002, 0]
@@ -55,4 +56,5 @@ In the same way, the in- and outflow inputfiles can be adapted by providing the 
 The complete configuration can be written to files by:
 
 .. code-block:: python
+
     simstrat_configuration.writeConfiguration()
