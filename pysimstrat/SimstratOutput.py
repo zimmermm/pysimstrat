@@ -7,28 +7,7 @@ from enum import Enum
 from scipy.ndimage.filters import gaussian_filter
 from collections import namedtuple
 import pysimstrat.date as simdate
-import matplotlib
-matplotlib.use('pgf')
-pgf_with_pdflatex = {
-	"pgf.texsystem": "pdflatex",
-	"text.usetex": True,                # use LaTeX to write all text
-	"font.family": "serif",
-	"font.serif": [],                   # blank entries should cause plots to inherit fonts from the document
-	"font.sans-serif": [],
-	"font.monospace": [],
-	"pgf.preamble": [
-		 r"\usepackage[utf8x]{inputenc}",
-		 r"\usepackage[T1]{fontenc}",
-		 r"\usepackage[sc]{mathpazo}",
-		 r"\usepackage{eulervm}",
-		 r"\linespread{1.05}",
-		 r"\usepackage{siunitx}",
-		 r"\usepackage{chemformula}"
-		 ]
-}
-matplotlib.rcParams.update(pgf_with_pdflatex)
-matplotlib.rcParams['pdf.fonttype'] = 42
-matplotlib.rcParams['ps.fonttype'] = 42
+from rotseedataset import plottools
 
 import matplotlib.pyplot as pyplot
 import matplotlib.dates as mdates
@@ -42,6 +21,8 @@ class PlotScale(Enum):
 class ModelOutputDefinitions(Enum):
 	T = ('T', 'Temperature', '\si{\celsius}', PlotScale.LINEAR)
 	nuh = ('nuh', 'Turbulent Diffusivity', '\si{\square\metre\per\second}', PlotScale.LOG)
+	P = ('P', 'Shear Stress Production', '\si{\watt\per\kilo\gram}', PlotScale.LOG)
+	B = ('B', 'Buoyancy Production', '\si{\watt\per\kilo\gram}', PlotScale.LOG)
 	S = ('S', 'Salinity', 'permille', PlotScale.LINEAR)
 
 
@@ -74,6 +55,9 @@ def getModelOutput(state_var_shortname, path='./Rotsee_Output/'):
 			self.df.set_index(index_col, inplace=True)
 			self.df.index.name = 'date'
 			self.df.columns = [-float(col) for col in self.df.columns]
+			#for col in self.df.columns:
+			#	self.df[col] = pd.to_numeric(self.df[col], errors='coerce')
+			#self.df = self.df.clip(lower=1e-15)
 
 		def as_matrix(self):
 			model_dates = self.df.index.values
