@@ -27,7 +27,7 @@ class Parfile(ParfileType):
 													 namedlist('ModelOptions', [('turbulencemodel', 1), ('stabilityfunction', 2), ('fluxcondition', 1), ('forcingtype', 3), ('usefilteredwind', 0), ('seichenormalization', 2), ('winddragmodel', 3), ('inflowplacement', 0), ('pressuregradient', 0), ('enablesalinitytransport', 1), ('displaysimulation', 0), ('displaydiagnose', 1), ('averagedate', 10)]))
 							),
 							('modelparameter', Section('*** Model parameters **************************************',
-													   namedlist('ModelParameter', [('lat', 47.55), ('p_air', 990), ('a_seiche', 0.001), ('q_NN', 1), ('f_wind', 1), ('C10', 1), ('CD', 0.002), ('fgeo', 0.1), ('k_min', 1e-9), ('p1', 1), ('p2', 1), ('beta', 0.35), ('albsw', 0.08)]))
+													   namedlist('ModelParameter', [('lat', 47.55), ('p_air', 990), ('a_seiche', 0.001), ('q_NN', 1), ('f_wind', 1), ('C10', 1), ('CD', 0.002), ('fgeo', 0), ('k_min', 1e-9), ('p1', 1), ('p2', 1), ('beta', 0.35), ('albsw', 0.08)]))
 							)
 						  ])
 	COMMENTS = {'stepsize': 'Timestep dt [s]',
