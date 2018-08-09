@@ -15,6 +15,6 @@ def generateForcingDataFrame(meteo_data):
                                              'Tair (' + u"\N{DEGREE SIGN}" + 'C)': pd.Series(meteo_data['air_temperature']),
                                              'Fsol (W/m2)': pd.Series(meteo_data['global_radiation']),
                                              'vap (mbar)': pd.Series(meteo_data['vapour_pressure']),
-                                             'cloud coverage': pd.Series(1.-meteo_data['sunshine']/100.)})
+                                             'cloud coverage': pd.Series(1.-meteo_data['sunshine']/100.).clip(lower=0.0, upper=1.0)})
         SimStratForcing = SimStratForcing[['t', 'u (m/s)', 'v (m/s)', 'Tair (' + u"\N{DEGREE SIGN}" + 'C)', 'Fsol (W/m2)', 'vap (mbar)', 'cloud coverage']]
         return SimStratForcing
