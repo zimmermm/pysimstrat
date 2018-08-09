@@ -66,7 +66,8 @@ DefaultParfileParameterDefinitions = ParameterDefinitions([ParameterDefinitionFa
 														   ParameterDefinitionFactory('a_seiche', 0.01, 0.001, 0.01),
 														   ParameterDefinitionFactory('q_NN', 1.0, 0.7, 1.25),
 														   ParameterDefinitionFactory('f_wind', 1.0, 0.1, 2.0),
-														   ParameterDefinitionFactory('C10', 0.0015, 0.001, 0.003),
+														   #ParameterDefinitionFactory('C10', 0.0015, 0.001, 0.003), # for simstrat < 1.4
+														   ParameterDefinitionFactory('C10', 1.0, 0.001, 2.),
 														   ParameterDefinitionFactory('CD', 0.002, 0.001, 0.005),
 														   ParameterDefinitionFactory('fgeo', 0, 0, 1.0).relative(),
 														   ParameterDefinitionFactory('k_min', 1e-9, 1e-15, 1e-9),
@@ -198,8 +199,8 @@ class OutputInstruction(object):
 		self.observationdata = pd.DataFrame(OrderedDict([
 			('OBSNME', [obs_label+str(i) for i in range(n_obs)]),
 			('OBSVAL', self.observation_df[obs_label].map(outputinstructiondefinition.float_format.format)),
-			('WEIGHT', np.ones((n_obs, 1)).ravel()),
-			('OBGNME', 'obs'),
+			('WEIGHT', 100.*np.ones((n_obs, 1)).ravel()/self.observation_df[obs_label].sum()),
+			('OBGNME', obs_label),
 		]))
 
 		self.root = root
@@ -352,6 +353,9 @@ class PESTControlFile(PESTControlFileType):
 		self.MCLI = modelcommand
 		self.NPAR = len(self.parameterdata)
 		self.NOBS = len(self.observationdata)
+		obsgp = self.observationdata.outputdata['OBGNME'].unique()
+		self.NOBSGP = len(obsgp)
+		self.OBGNME = '\n'.join(obsgp)
 		self.NTPLFLE = len(templates)
 		self.NINSFLE = len(self.outputinstructions)
 		self.modelinout = ModelInputOutput(templates, self.outputinstructions)
