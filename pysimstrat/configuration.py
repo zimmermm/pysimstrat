@@ -8,6 +8,8 @@ from namedlist import namedlist
 from enum import Enum
 from itertools import islice
 from pysimstrat.date import *
+import json
+import re
 
 
 ''' DATA STRUCTURE DEFINITION '''
@@ -91,6 +93,67 @@ class Parfile(ParfileType):
 		outputfolder_idx = Parfile.SECTIONS['inputfiles'].section_class._fields.index('outputfolder')
 		assert all([os.path.isfile(os.path.join(self.root,f)) for i, f in enumerate(self.inputfiles) if i != outputfolder_idx])
 
+	def translate_to_json_parfile_dict(self):
+		parfile={}
+		parfile['Input'] = {
+			"Initial conditions"  : self.inputfiles.initialconditions,
+			"Grid"                : self.inputfiles.grid,
+			"Morphology"          :	self.inputfiles.morphology,
+			"Forcing"             : self.inputfiles.forcing,
+			"Absorption"          : self.inputfiles.absorption,
+			"Inflow"              : self.inputfiles.Qinp,
+			"Outflow"             : self.inputfiles.Qout,
+			"Inflow temperature"  : self.inputfiles.Tinp,
+			"Inflow salinity"     : self.inputfiles.Sinp
+		}
+		parfile['Output'] = {
+			"Path"					: self.inputfiles.outputfolder,
+			"Depths"				: self.inputfiles.outputdepths,
+			"OutputDepthReference"	: "surface",
+			"Times"					: self.inputfiles.outputtime
+		}
+		parfile['ModelConfig'] = {
+			"MaxLengthInputData"      : 1000,
+			"CoupleAED2"              : False,
+			"TurbulenceModel"         : self.modeloptions.turbulencemodel,
+			"StabilityFunction"       : self.modeloptions.stabilityfunction,
+			"FluxCondition"           : self.modeloptions.fluxcondition,
+			"Forcing"                 : self.modeloptions.forcingtype,
+			"UseFilteredWind"         : self.modeloptions.usefilteredwind == 1,
+			"SeicheNormalization"     : self.modeloptions.seichenormalization,
+			"WindDragModel"           : self.modeloptions.winddragmodel,
+			"InflowPlacement"         : self.modeloptions.inflowplacement,
+			"PressureGradients"       : self.modeloptions.pressuregradient,
+			"IceModel"                : 0,
+			"SnowModel"               : 0	
+		}
+		parfile['Simulation'] = {
+			"Timestep s"        : self.simulationconfig.stepsize,
+			"Start d"           : self.simulationconfig.startdate,
+			"End d"             : self.simulationconfig.enddate,
+			"DisplaySimulation" : int(self.modeloptions.displaysimulation)
+		}
+		parfile['ModelParameters'] = {
+			"lat"           : self.modelparameter.lat,
+			"p_air"         : self.modelparameter.p_air,
+			"a_seiche"      : self.modelparameter.a_seiche,
+			"q_nn"          : self.modelparameter.q_NN,
+			"f_wind"        : self.modelparameter.f_wind,
+			"c10"           : self.modelparameter.C10,
+			"cd"            : self.modelparameter.CD,
+			"hgeo"          : self.modelparameter.fgeo,
+			"k_min"         : self.modelparameter.k_min,
+			"p_radin"       : self.modelparameter.p1,
+			"p_windf"       : self.modelparameter.p2,
+			"beta_sol"      : self.modelparameter.beta,
+			"beta_snowice" : 0.40,
+			"albsw"         : self.modelparameter.albsw,
+			"ice_albedo"    : 0.30,
+			"snow_albedo"   : 0.77,
+			"freez_temp"    : 0.05
+		}
+		return parfile
+
 	def write(self):
 		def generate_section(section_header, section):
 			section_dict = section._asdict()
@@ -99,9 +162,16 @@ class Parfile(ParfileType):
 			return '\n'.join([section_header]+
 							 ['\t'.join([str(section_dict[param]).ljust(8), Parfile.COMMENTS[param]]) if param in Parfile.COMMENTS.keys() else str(section_dict[param]).ljust(8) for param in ordered_params]
 							)
-
+		# write old parfile structure
 		with open(os.path.join(self.root, self.filename), 'w', encoding='utf-8') as parfile:
 			parfile.write('\n'.join([generate_section(Parfile.SECTIONS[section].header, getattr(self, section)) for section in Parfile.SECTIONS]))
+
+		# write new parfile structure (json)
+		parfile_json = self.translate_to_json_parfile_dict()
+		json_string = json.dumps(parfile_json, indent=4)
+		json_string = re.sub(r'[:]\s"#(.*)"', ': #\\1', json_string)
+		with open(os.path.join(self.root, "json_"+self.filename), 'w', encoding='utf-8') as parfile:
+			parfile.write(json_string)
 
 
 def simstrat_outputfoldertype():

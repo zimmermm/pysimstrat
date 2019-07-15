@@ -41,14 +41,14 @@ def getModelOutput(state_var_shortname, path='./Rotsee_Output/'):
 		def read(self):
 			# try to read the temperature data
 			try:
-				self.df = pd.read_csv(os.path.join(self.path, self.shortname + '_out.dat'), header=0, delim_whitespace=True)
+				self.df = pd.read_csv(os.path.join(self.path, self.shortname + '_out.dat'), header=0)#, delim_whitespace=True)
 			except Exception as e:
 				error('Could not read model output!')
 				print(e)
 				sys.exit(1)
 
 			# remove last column that contains the surface values
-			self.df.drop(self.df.columns[-1], axis=1, inplace=True)
+			#self.df.drop(self.df.columns[-1], axis=1, inplace=True)
 
 			index_col = self.df.columns[0]
 			self.df[index_col] = [simdate.days_to_datetime64(date) for date in self.df[index_col]]

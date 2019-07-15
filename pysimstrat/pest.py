@@ -63,7 +63,7 @@ def ParameterDefinitions(parameterdefinitions):
 
 DefaultParfileParameterDefinitions = ParameterDefinitions([ParameterDefinitionFactory('lat', 47.55, 40.0, 50.0),
 														   ParameterDefinitionFactory('p_air', 990, 900, 1000),
-														   ParameterDefinitionFactory('a_seiche', 0.01, 0.001, 0.01),
+														   ParameterDefinitionFactory('a_seiche', 0.01, 0.00001, 0.01).log(),
 														   ParameterDefinitionFactory('q_NN', 1.0, 0.7, 1.25),
 														   ParameterDefinitionFactory('f_wind', 1.0, 0.1, 2.0),
 														   #ParameterDefinitionFactory('C10', 0.0015, 0.001, 0.003), # for simstrat < 1.4
@@ -133,11 +133,12 @@ def generateTemplate(templatedefinition, marker, root='./'):
 
 	# class definition of an inputfile template
 	class InputfileTemplate(inputfile_class):
-		def __init__(self, filename, mask, root='./'):
+		def __init__(self, filename, mask, inputfile_class, root='./'):
 			templatefilename = ''.join([filename.rsplit('.', 1)[0],'.tpl'])
 			self.mask = mask
 			super(InputfileTemplate, self).__init__(filename, root=root)
 			super(InputfileTemplate, self).read()
+			self.inputfile_class = inputfile_class
 			self.inputfile_name = self.filename
 			self.filename = templatefilename
 			self.mask.cast(self, masked_data, marker)
@@ -153,7 +154,16 @@ def generateTemplate(templatedefinition, marker, root='./'):
 				pest_header = 'ptf ' + marker
 				templatefile.write('\n'.join([pest_header, content]))
 
-	return InputfileTemplate(filename, createInputfileMask(inputfile_class, masked_data), root=root)
+			if self.inputfile_class is simconfig.Parfile:
+				with open(os.path.join(self.root, "json_"+self.filename), 'r', encoding='utf-8') as templatefile:
+					content = templatefile.read()
+
+				with open(os.path.join(self.root, "json_"+self.filename), 'w', encoding='utf-8') as templatefile:
+					pest_header = 'ptf ' + marker
+					templatefile.write('\n'.join([pest_header, content]))
+
+
+	return InputfileTemplate(filename, createInputfileMask(inputfile_class, masked_data), inputfile_class, root=root)
 
 
 ##################################################
@@ -219,10 +229,10 @@ class OutputInstruction(object):
 					instruction_df = instructions_df.loc[[simdate.days_to_datetime64(date)], :]
 					marker = '%{:.4f}%'.format(date)
 					idx = [np.where(depths==instruction_depth)[0][0] for instruction_depth in instruction_df['depth']]
-					instructions = ['w']*(max(idx)+2)
+					instructions = ['']*(max(idx)+1)
 					for i, nme in zip(idx, instruction_df['OBSNME']):
-						instructions[i+1] = '!{0}!'.format(nme)
-					yield ' '.join([marker]+instructions)
+						instructions[i] = '!{0}!'.format(nme)
+					yield ' %,% '.join([marker]+instructions)
 
 			outputinstruction.write('\n'.join([header]+list(createInstructions())))
 
@@ -254,7 +264,7 @@ class ModelInputOutput(object):
 		self.outputinstructions = outputinstructions
 
 	def __str__(self):
-		return '\n'.join(['\n'.join([template.filename + '\t' + template.inputfile_name for template in self.templates]),
+		return '\n'.join(['\n'.join([("json_"+template.filename + '\t' + "json_"+template.inputfile_name) if template.inputfile_class is simconfig.Parfile else (template.filename + '\t' + template.inputfile_name) for template in self.templates]),
 						  '\n'.join([outputinstruction.filename + '\t' + outputinstruction.outputfilepath for outputinstruction in self.outputinstructions])
 						 ])
 
@@ -270,7 +280,7 @@ PESTControlFileType = namedlist('PESTControlFile',
 									('NOBSGP', 1),
 									('NTPLFLE', None),
 									('NINSFLE', None),
-									('PRECIS', 'double'),
+									('PRECIS', 'single'),
 									('DPOINT', 'nopoint'),
 									('NUMCOM', 1),
 									('JACFILE', 0),
